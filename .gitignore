@@ -1,0 +1,34 @@
+# Local project workspaces and external repo mirrors are not part of the
+# reusable GitHub agent package. Keep only placeholders/docs under projects/.
+_external_repos/
+projects/*
+!projects/.gitkeep
+!projects/README.md
+
+# Local reference/workbench folders that are not part of the approved team
+# package unless reviewed separately.
+diagnostics/
+pbi/
+Power BI Governance/
+AI_BI_Admin_Technical_Reference.docx
+
+.env
+.env.*
+*.key
+*.pem
+
+__pycache__/
+.pytest_cache/
+.pycache_runtime/
+pytest-cache-files-*/
+*.pyc
+.pbi/
+*.abf
+
+*.tmp
+*.log
+*.zip
+*.parquet
+*.csv
+*.xlsx
+*.pbix

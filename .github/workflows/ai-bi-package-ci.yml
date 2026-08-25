@@ -1,0 +1,57 @@
+name: AI BI Package CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  package-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify package shape
+        shell: bash
+        run: |
+          test -f AGENTS.md
+          test -f README.md
+          test -f TEAM_SETUP.md
+          test -f GITHUB_TRANSFER_CHECKLIST.md
+          test -d _workflow
+          test -f _workflow/AI_BI_5_Phase_Workflow.md
+          test -f _workflow/power_bi_templates/copy_empty_pbip.ps1
+          test -f _workflow/power_bi_templates/empty_pbip/EmptyPowerBI.pbip
+          test -f _workflow/power_bi_templates/empty_pbip/EmptyPowerBI.Report/definition.pbir
+          test -f _workflow/power_bi_templates/empty_pbip/EmptyPowerBI.SemanticModel/definition/model.tmdl
+          pbi_cache="$(find _workflow/power_bi_templates \( -path '*/.pbi/*' -o -name '*.abf' \) -print)"
+          if [ -n "$pbi_cache" ]; then
+            echo "Power BI local cache files should not be committed:"
+            echo "$pbi_cache"
+            exit 1
+          fi
+          for blocked in diagnostics pbi "Power BI Governance" AI_BI_Admin_Technical_Reference.docx; do
+            if [ -e "$blocked" ]; then
+              echo "Local-only item should not be committed: $blocked"
+              exit 1
+            fi
+          done
+          unexpected="$(find projects -mindepth 1 \
+            ! -name '.gitkeep' \
+            ! -name 'README.md' \
+            -print)"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected project output files are present:"
+            echo "$unexpected"
+            exit 1
+          fi
+
+      - name: Secret pattern scan
+        shell: bash
+        run: |
+          pattern="(client""_secret|access""_token|refresh""_token|api""_key|private""_key|connection""_string)[[:space:]]*[:=][[:space:]]*['\"]?[^'\"<>[:space:]]+"
+          ! grep -RInE "$pattern" . \
+            --exclude-dir=.git \
+            --exclude-dir=projects \
+            --exclude-dir=__pycache__ \
+            --exclude-dir=.pytest_cache \
+            --exclude-dir=.pycache_runtime
